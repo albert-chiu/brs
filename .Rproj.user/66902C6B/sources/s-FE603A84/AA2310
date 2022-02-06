@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1614839431083.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1408765613",
+    "id" : "AA2310",
+    "lastKnownWriteTime" : 1630069196,
+    "last_content_update" : 1630069196660,
+    "path" : "~/Dropbox/QCAplus/package/BRS/R/chord.R",
+    "project_path" : "R/chord.R",
+    "properties" : {
+        "cursorPosition" : "219,14",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

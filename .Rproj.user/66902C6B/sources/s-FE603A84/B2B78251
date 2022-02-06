@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1614839445345.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "50272525",
+    "id" : "B2B78251",
+    "lastKnownWriteTime" : 1629940258,
+    "last_content_update" : 1629940258264,
+    "path" : "~/Dropbox/QCAplus/package/BRS/R/tsne.R",
+    "project_path" : "R/tsne.R",
+    "properties" : {
+        "cursorPosition" : "160,61",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

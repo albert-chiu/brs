@@ -1,0 +1,199 @@
+setwd("~/Dropbox/QCAplus/")
+require(BRS)
+
+# functions --------------
+discretize <- function(x, q, leq=TRUE) {
+  if(leq){
+    return(as.numeric(x < quantile(x, q, na.rm=T)))
+  } else {
+    return(as.numeric(x >= quantile(x, q, na.rm=T)))
+  }
+}
+
+getLabel <- function(feat, feats, flabels, vals, vlabels) {
+  split <- strsplit(feat, "_")[[1]]
+  flab <- flabels[which(feats==split[1])]
+  if (length(split) > 1) {
+    vlab <- vlabels[which(vals==split[2])]
+    return(paste0(flab, " (", vlab, ")"))
+  } else {
+    return(flab)
+  }
+}
+
+# data -------------------
+dep <- haven::read_dta("data/explore/depression/Qualtrics_data.dta")
+df <- dep[, -c(1:20, which(colnames(dep)=="vote18"))]
+X <- df[, sapply(1:ncol(df), FUN=function(i) length(unlist(unique(df[, i])))==2)]
+
+X$depression_low <- discretize(df$depression, 1/3)
+X$depression_lowmed <- discretize(df$depression, 2/3)
+#X$depression_medhigh <- as.numeric(!X$depression_low)
+X$depression_high <- as.numeric(!X$depression_lowmed)
+#X$depression_med <- as.numeric(X$depression_lowmed & !X$depression_low)
+X$age_low <- discretize(df$age, 1/3)
+X$age_lowmed <- discretize(df$age, 2/3)
+#X$age_medhigh <- as.numeric(!X$age_low)
+X$age_high <- as.numeric(!X$age_lowmed)
+#X$age_med <- as.numeric(X$age_lowmed & !X$age_low)
+X$educ_low <- as.numeric(df$educ <= 2)
+X$educ_lowmed <- as.numeric(df$educ <= 5)
+#X$educ_medhigh <- as.numeric(!X$educ_low)
+X$educ_high <- as.numeric(!X$educ_lowmed)
+#X$educ_med <- as.numeric(X$educ_lowmed & !X$educ_low)
+X$inc_low <- as.numeric(df$income <= 4)
+X$inc_lowmed <- as.numeric(df$income <= 9)
+#X$inc_medhigh <- as.numeric(!X$inc_low)
+X$inc_high <- as.numeric(!X$inc_lowmed)
+#X$inc_med <- as.numeric(X$inc_lowmed & !X$inc_low)
+X$attend_low <- as.numeric(df$attend <= 2)
+X$attend_lowmed <- as.numeric(df$attend <= 3)
+#X$attend_medhigh <- as.numeric(!X$attend_low)
+X$attend_high <- as.numeric(!X$attend_lowmed)
+#X$attend_med <- as.numeric(X$attend_lowmed & !X$attend_low)
+X$polint_low <- as.numeric(df$polint <= .5)
+X$polint_high <- as.numeric(!X$polint_low)
+X$inteff1_low <- as.numeric(df$inteff1 <= .25)
+X$inteff1_lowmed <- as.numeric(df$inteff1 <= .5)
+#X$inteff1_medhigh <- as.numeric(!X$inteff1_low)
+X$inteff1_high <- as.numeric(!X$inteff1_lowmed)
+#X$inteff1_med <- as.numeric(X$inteff1_lowmed & !X$inteff1_low)
+X$inteff2_low <- as.numeric(df$inteff2 <= .25)
+X$inteff2_lowmed <- as.numeric(df$inteff2 <= .5)
+#X$inteff2_medhigh <- as.numeric(!X$inteff2_low)
+X$inteff2_high <- as.numeric(!X$inteff2_lowmed)
+#X$inteff2_med <- as.numeric(X$inteff2_lowmed & !X$inteff2_low)
+X$motivation_low <- discretize(df$motivation, 1/3)
+X$motivation_lowmed <- discretize(df$motivation, 2/3)
+X#$motivation_medhigh <- as.numeric(!X$motivation_low)
+X$motivation_high <- as.numeric(!X$motivation_lowmed)
+#X$motivation_med <- as.numeric(X$motivation_lowmed & !X$motivation_low)
+
+Y <- dep$vote18
+
+#BRS ----------------
+numMine <- 5000L  # number of rules to be used in SA_patternbased and also the output of generate_rules
+numIter <- 10000L  # number of iterations in each chain
+numChain <- 10L  # number of chains in the simulated annealing search algorithm
+supp <- 5L  # 5% is a generally good number. The higher this supp, the 'larger' a pattern is
+maxLen <- 3L  # maxmum length of a pattern
+# \rho = alpha/(alpha+beta). Make sure \rho is close to one when choosing alpha and beta.
+alpha_1 <- 500L  # alpha_+
+beta_1 <- 1L  # beta_+
+alpha_2 <- 500L  # alpha_-
+beta_2 <- 1L  # beta_-
+alpha_l <- NULL  # let function autogenerate values
+beta_l <- NULL  # let function autogenerate values
+reps <- 100L  # number of bootstrap reps
+trainProp <- 1   # proportion of data to use as training
+# lambda = 3; nu=1; # old variables; depression
+# lambda <- 1; nu <- 1 # no depression
+lambda <- 1
+nu <- 1
+out <- BRS(df=X, Y=Y,
+           maxLen=maxLen, trainProp=trainProp,
+           numIter=numIter, numChain=numChain,
+           supp=supp, numMine=numMine,
+           alpha_1=alpha_1, alpha_2=alpha_2,
+           beta_1=beta_1, beta_2=beta_2,
+           prior_type="poisson",
+           alpha_l=NULL, beta_l=NULL,
+           lambda=lambda, nu=nu,
+           bootstrap=F,
+           #bootstrap=T, reps=100L,
+           print=T,
+           seed=123)
+out[[1]]
+yhat <- get_Yhat(out[[1]][[1]], df=X)
+get_stats(yhat, Y)
+
+#save(out, file="data/BRS output/vote_pois.rda")
+load("data/BRS output/vote_pois.rda")
+
+feats <- unique(sapply(strsplit(colnames(X), "_"), function(x) x[1]))
+flabels <- c("Female", "Hispanic", "Black", "Married", "Unemployed",
+             "Depression", "Age", "Education", "Income", "Religious Attendance",
+             "Political Interest", "Int. Eff. (#1)", "Int. Eff. (#2)",
+             "Motivation")
+vals <- unique(sapply(strsplit(colnames(X), "_"), function(x) x[2]))
+vals <- vals[!is.na(vals)]
+vlabels <- c("low", "low or med", "high")
+
+fgs <- unique(unlist(lapply(strsplit(colnames(X), "_"), function(x) x[1])))
+featGroups <- cbind.data.frame(fgs, "lab"=sapply(fgs, function(x) getLabel(x, fgs, flabels, NA, NA)))
+png("paper/figure/vote_chord.png", width = 6, height = 3.2, units = 'in', res = 300)
+plot_chord(out, featureNames = colnames(X),
+           featureGroups = featGroups,
+           minProp = .1,
+           maxLen = 3,
+           lengths=2:3,
+           dims=c(1,2),
+           linkColors=c(RColorBrewer::brewer.pal(9, "Set3")[-2], RColorBrewer::brewer.pal(8, "Accent")),
+           gridColors = "gray",
+           bgLinkColor=prettyGraphs::add.alpha(RColorBrewer::brewer.pal(3, "Greys"), alpha=.1)[2],
+           line_arg=.75, textSize = .9, side_mar=1, top_mar=2)
+dev.off()
+
+# tsne
+png("paper/figure/vote_tsne_test5.png", width = 5, height = 4, units = 'in', res = 300)
+set.seed(123)
+plot_tsne(X, Y, out[[1]][[1]], 
+          caseColors=prettyGraphs::add.alpha(RColorBrewer::brewer.pal(6, "Paired")[c(4,6)], alpha=.3),
+          boxColor="grey")
+dev.off()
+
+
+# tsne
+require(QCA)
+incl <- c() # variables to include
+for (rule in out[[1]][[1]]) {
+  for (cond in rule) {
+    split <- strsplit(cond, "_")[[1]]
+    is_neg <- as.numeric(split[length(split)]=="neg")
+    incl <- c(incl, paste(split[1:(length(split)-is_neg)], collapse="_"))
+  }
+}
+train <- cbind.data.frame(X[, colnames(X)[which(colnames(X) %in% incl)]], Y)
+tt <- truthTable(train, outcome = "Y", complete = TRUE, 
+                 show.cases = TRUE, sort.by = c("n"), incl=0)
+tab <- tt$tt[order(tt$tt$n, decreasing=T), ]
+clust_numb <- rep(0, times=nrow(train))
+for (i in 1:4) {
+  clust <- tab[i, 1:ncol(train)]
+  clust_ind <- apply(train, MARGIN=1, FUN=function(x) all(x==clust))
+  clust_numb[clust_ind] <- i
+}
+
+tab[1:4, 1:ncol(train)+1]
+
+png("paper/figure/vote_tsne_test.png", width = 5, height = 4, units = 'in', res = 300)
+set.seed(123)
+plot_tsne(X, Y, out[[1]][[1]], caseColors=c(RColorBrewer::brewer.pal(6, "Paired")[c(4,6)]),
+          boxColor="grey", clust_numb=clust_numb)
+dev.off()
+
+
+
+
+# bootstrapped ---------------------
+load("sherlock/out/out_vote_sherlock.rda")
+
+feats <- unique(sapply(strsplit(colnames(X), "_"), function(x) x[1]))
+flabels <- c("Female", "Hispanic", "Black", "Married", "Unemployed",
+             "Depression", "Age", "Education", "Income", "Religious Attendance",
+             "Political Interest", "Int. Eff. (#1)", "Int. Eff. (#2)",
+             "Motivation")
+vals <- unique(sapply(strsplit(colnames(X), "_"), function(x) x[2]))
+vals <- vals[!is.na(vals)]
+vlabels <- c("low", "low or med", "high")
+
+fdf <- cbind(colnames(X), sapply(colnames(X), function(x) getLabel(x, feats, flabels, vals, vlabels)))
+oppmat <- rbind(c("low", "high"),
+                c("low", "medhigh"),
+                c("high", "lowmed"))
+
+png("paper/figure/vote_pois_bar_simple.png", width = 18, height = 8, units = 'in', res = 300)
+plot_bar(X, Y, out, fdf, maxLen=3, minProp = .05, textSize=20,
+         simplify = T, opp=oppmat,
+         plotBuffer = c(.4, .3, 0))
+dev.off()

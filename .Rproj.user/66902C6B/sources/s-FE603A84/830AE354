@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1631655491659.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "720260189",
+    "id" : "830AE354",
+    "lastKnownWriteTime" : 1631655862,
+    "last_content_update" : 1631655862604,
+    "path" : "~/Dropbox/QCAplus/package/BRS/R/agg.R",
+    "project_path" : "R/agg.R",
+    "properties" : {
+        "cursorPosition" : "31,7",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 10,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

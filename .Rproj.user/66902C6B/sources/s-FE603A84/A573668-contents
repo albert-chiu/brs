@@ -1,0 +1,20 @@
+
+# separately do length 1
+freq[[1]] <- table(byLen[[len]]) # Frequencies of rules
+freq[[1]] <- sort(freq[[1]], decreasing=T)[1:min(maxRules,length(freq[[1]]))] # sort, keep only top maxRules
+rules[[1]] <- names(freq[[1]])
+
+freq[[len]] <- apply(byLen[[len]], 1, function(x) paste(x, collapse="")) # convert rule into "and" statement to tabulate occurence
+ddply(byLen[[len]], function(x) nrow(x))
+freq[[len]] <- table(freq[[len]]) # Frequencies of rules
+freq[[len]] <- sort(freq[[len]], decreasing=T)[1:min(maxRules,length(freq[[len]]))] # sort, keep only top maxRules
+rules[[len]]
+
+
+
+#'load("~/Dropbox/QCAplus/package/lipset_results.rda")
+#'df <- lipset_df; Y <- lipset_Y
+#'allRuleSets <- lipset_res[[1]]; allIndices <- lipset_res[[2]]; allFeatures <- names(lipset_df)
+#'maxLen <- 3; maxRules <- 10; minProp <- .05; and=" * "; simplify=T
+#'featureLabels <- cbind(names(lipset_df), c("High GNPPC", "Medium GNPPC", "Low GNPPC", "High Urbanization", "Low Urbanization", "High Literacy", "Low Literacy", "High Industrialization", "Low Industrialization"))
+#'

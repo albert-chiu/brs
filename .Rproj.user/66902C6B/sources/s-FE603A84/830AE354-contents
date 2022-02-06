@@ -1,0 +1,45 @@
+#'
+agg_BRS <- function(fit, X, Y, maxLen, split= F, train=.7, maxRules=3, stat="acc", topRules=5, minProp=0, simplify=F, oppmat=NULL, oppind=NULL) {
+  if (!split) {  # use whole sample to get which one to use
+    X_test <- X
+    Y_test <- Y
+  } else {
+    if (length(train)==1) { # use specifies train proportion instead of indices
+      train <- sample(1:nrow(X), size=train*nrow(X))
+    }
+    X_test <- X[-train, ]
+    Y_test <- Y[-train]
+    X <- X[train, ]
+    Y <- Y[train]
+  }
+
+  rules <- get_topRules(X=X, Y=Y, fit=fit, maxLen = maxLen,
+                        topRules=topRules, minProp=minProp,
+                        simplify=simplify, oppmat=oppmat, oppind=oppind)[["rules"]]
+
+  # indices of rules; first column is index in list, second column is row number in rules[[x]]
+  ind <- do.call(rbind, lapply(1:length(rules), function(x) cbind(x, 1:nrow(rules[[x]]))))
+
+  combn <- lapply(1:maxRules, function(x) gtools::combinations(n=nrow(ind), r=x))
+
+  bestRSs <- list()
+  bestStats <- list()
+  for (i in 1:length(combn)) {
+    maxStat <- 0
+    for (j in 1:nrow(combn[[i]])) {
+      this <- as.data.frame(matrix(ind[combn[[i]][j,],], nrow=i))
+      rs <- lapply(1:nrow(this), function(x) unlist(rules[[this[x, 1]]][this[x, 2], ]))
+      this_stat <- get_stat(Yhat = get_Yhat(rs, df=X), Y = Y, stat = stat)
+      if (this_stat > maxStat) {
+        bestRSs[[i]] <- rs
+        maxStat <- this_stat
+      }
+    }
+    bestStats[[i]] <- get_stat(Yhat = get_Yhat(bestRSs[[i]], df=X_test), Y = Y_test, stat = stat)
+  }
+
+  #return(list("Rule Sets"=bestRSs, "Performance"=bestStats, train))
+
+  # only return best rule set
+  return(bestRSs[[which.max(unlist(bestStats))]])
+}

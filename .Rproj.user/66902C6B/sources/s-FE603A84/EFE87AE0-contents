@@ -1,0 +1,105 @@
+rm(list=ls())
+require(BRS)
+
+############################
+# Run BRS
+############################
+## Hyperparameters
+numMine = 5000L      # number of rules to be used in SA_patternbased and also the output of generate_rules
+numIter = 500L  # number of iterations in each chain
+numChain = 2L         # number of chains in the simulated annealing search algorithm
+supp = 5L           # 5% is a generally good number. The higher this supp, the 'larger' a pattern is
+maxLen = 3L         # maxmum length of a pattern
+# \rho = alpha/(alpha+beta). Make sure \rho is close to one when choosing alpha and beta.
+alpha_1 = 1000L       # alpha_+
+beta_1 = 1L          # beta_+
+alpha_2 = 1000L         # alpha_-
+beta_2 = 1L       # beta_-
+alpha_l = NULL      # let function autogenerate values
+beta_l = NULL      # let function autogenerate values
+reps = 100L      # number of bootstrap reps
+trainProp =.7      # proportion of data to use as training
+
+lipset_res <- BRS(lipset_df, lipset_Y, supp, maxLen, numMine, numIter, numChain, trainProp,
+                  alpha_1=alpha_1, alpha_2=alpha_2, bootstrap=T, reps=reps, seed=1)
+save(lipset_res, file="~/Dropbox/QCAplus/package/lipset_results.rda")
+
+cooper_res <- BRS(cooper_df, cooper_Y, supp, maxLen, numMine, numIter, numChain, trainProp,
+                  alpha_1=alpha_1, alpha_2=alpha_2, bootstrap=T, reps=reps, seed=123)
+save(cooper_res, file="~/Dropbox/QCAplus/package/cooper_results.rda")
+
+############################
+# Chord Diagram
+############################
+## Generate colors
+require(RColorBrewer)
+linkColors <- brewer.pal(12, "Set3")
+gridColors <-brewer.pal(6, "Greys")[3]
+
+load("~/Dropbox/QCAplus/package/lipset_results.rda")
+lipset_featureGroups <- cbind(c("GNPCAP", "URBANIZA", "LITERACY", "INDLAB"),
+                       c("GNP per capita", "Industrialization", "Urbanization", "Literacy"))
+jpeg("~/Dropbox/QCAplus/paper/figure/lipset-chord.jpeg", units="in", width=10, height = 10, quality=100, pointsize=12, res=300)
+plot_chord(lipset_res, names(lipset_df), lipset_featureGroups, linkColors, gridColors, textSize=2.5)
+dev.off()
+
+load("~/Dropbox/QCAplus/package/cooper_results.rda")
+cooper_featureGroups <- cbind(c("Class", "Ability", "Male"),
+                              c("Class", "Ability", "Male"))
+jpeg("~/Dropbox/QCAplus//paper/figure/cooper-chord.jpeg", units="in", width=10, height = 10, quality=100, pointsize=12, res=300)
+plot_chord(cooper_res, names(cooper_df), cooper_featureGroups, linkColors, gridColors, textSize=2.5)
+dev.off()
+
+############################
+# t-SNE
+############################
+require(RColorBrewer)
+caseColors <- c(brewer.pal(6, "Paired")[c(4,6)])# ,add.alpha(brewer.pal(1, "Blues"), .3))
+boxColor <- prettyGraphs::add.alpha(brewer.pal(3, "Greys"), alpha=.7)[2]
+
+set.seed(1)
+load("~/Dropbox/QCAplus/package/lipset_results.rda")
+A <- list("GNPCAP_2", c("GNPCAP_0_neg", "INDLAB_0"))
+jpeg("~/Dropbox/QCAplus/paper/figure/lipset-tsne.jpeg", units="in", width=10, height = 10, quality=100, pointsize=16, res=300)
+plot_tsne(lipset_df, lipset_Y, A, caseColors, boxColor, symb=19, bottom_buffer=3, legend_offset = c(-5,-3), textSize = 1.5)
+#title(main="Lipset BRS Rule Coverage (t-SNE Plot)", cex.main=1)
+dev.off()
+
+set.seed(1)
+load("~/Dropbox/QCAplus/package/cooper_results.rda")
+A <- list(c("Class_1", "Ability_1"), c("Class_1", "Male_1")) # Rules to plot
+jpeg("~/Dropbox/QCAplus/paper/figure/cooper-tsne.jpeg", units="in", width=10, height = 10, quality=100, pointsize=16, res=300)
+plot_tsne(cooper_df, cooper_Y, A, caseColors, boxColor, symb=19, jitter_amount = 1, bottom_buffer=3, legend_offset = c(-5,-3), textSize = 1.5)
+dev.off()
+
+############################
+# bar
+############################
+load("~/Dropbox/QCAplus/package/lipset_results.rda")
+lipset_featureLabels <- cbind(names(lipset_df),
+                              c("High GNPPC", "Medium GNPPC", "Low GNPPC",
+                                "High Urbanization", "Low Urbanization",
+                                "High Literacy", "Low Literacy",
+                                "High Industrialization", "Low Industrialization"))
+lipset_featureLabels <- cbind(names(lipset_df),
+                          c("W(H)", "W(M)", "W(L)", # Wealth
+                            "U(H)", "U(L)", # Urbanization
+                            "L(H)", "L(L)", # Literacy
+                            "I(H)", "I(L)")) # Industrialization
+lipset_bar <- plot_bar(df=lipset_df, Y=lipset_Y, fit=lipset_res,
+         allFeatures=names(lipset_df), maxLen=3, featureLabels=lipset_featureLabels,
+         and=" * ", neg="~", maxRules=10, minProp=0.05, simplify=T, textSize = 12)
+jpeg("~/Dropbox/QCAplus/paper/figure/lipset-bar.jpeg", units="in", width=6, height = 4, quality=100, pointsize=12, res=300)
+plot(lipset_bar)
+dev.off()
+
+load("~/Dropbox/QCAplus/package/cooper_results.rda")
+cooper_featureLabels <- cbind(names(cooper_df),
+                              c("Service Class", "Male", "High Ability"))
+cooper_bar <- plot_bar(df=cooper_df, Y=cooper_Y, fit=cooper_res,
+         allFeatures=names(cooper_df), maxLen=3, featureLabels=cooper_featureLabels,
+         and=" AND ", neg="NOT ", maxRules=10, minProp=0.05, simplify=T, heightBuffer=0)
+jpeg("~/Dropbox/QCAplus//paper/figure/cooper-bar.jpeg", units="in", width=10, height = 4, quality=100, pointsize=12, res=300)
+plot(cooper_bar)
+dev.off()
+

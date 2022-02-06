@@ -1,0 +1,28 @@
+Package: brs
+Type: Package
+Title: Bayesian Rule Set
+Version: 0.0.0.9006
+Authors@R: c(
+    person("Albert", "Chiu", email = "altchiu@stanford.edu", role = c("aut", "cre")),
+    person("Yiqing", "Xu", email = "yiqingxu@stanford.edu", role = "aut"))
+Description: Package for implementing Bayesian Rule Set (BRS) in R,
+    as well as graphical tools introduced in Chiu and Xu (working 
+    paper). BRS is an interpretable machine learning algorithm that
+    uses rule sets to classify data. This package also allows users
+    to create bar plots, t-SNE plots, and chord diagrams to help
+    visualize the results of BRS.
+Imports:
+    reticulate,
+    circlize,
+    Rtsne,
+    ggplot2,
+    dplyr,
+    magrittr,
+    gtools
+SystemRequirements:
+License: GLP-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.2
+Depends: 
+    R (>= 2.10)

@@ -1,0 +1,75 @@
+# Albert Chiu and Yiqing Xu
+# This file gives an example of how to use the functions
+#   in the BRS package by reproducing the empirical example
+#   from Chiu and Xu (2021)
+
+# Instructions before using package --------------------------
+# This package requires Python and some standard modules that come as a part of the Anaconda distribution for Python
+# This package also requires the external package "PyFIM" available at http://www.borgelt.net/pyfim.html
+
+# Install package from source --------------------------
+path <- " "  # path to file, e.g. "/User/albertchiu/Dropbox/BRS/package/BRS_0.0.0.9000.tar.gz"
+install.packages(path, source = TRUE, repos=NULL)
+require(BRS)
+
+# Set hyperparameters --------------------------
+numMine <- 5000L  # number of rules to be used in SA_patternbased and also the output of generate_rules
+numIter <- 500L  # number of iterations in each chain
+numChain <- 2L  # number of chains in the simulated annealing search algorithm
+supp <- 5L  # 5% is a generally good number. The higher this supp, the 'larger' a pattern is
+maxLen <- 3L  # maxmum length of a pattern
+# \rho = alpha/(alpha+beta). Make sure \rho is close to one when choosing alpha and beta.
+alpha_1 <- 1000L  # alpha_+
+beta_1 <- 1L  # beta_+
+alpha_2 <- 1000L  # alpha_-
+beta_2 <- 1L  # beta_-
+alpha_l <- NULL  # let function autogenerate values
+beta_l <- NULL  # let function autogenerate values
+reps <- 100L  # number of bootstrap reps
+trainProp <- .7  # proportion of data to use as training
+
+
+# Run BRS --------------------------
+cooper_res <- BRS(df=cooper_df, Y=cooper_Y, maxLen=maxLen, trainProp=trainProp,
+                  numIter=numIter, numChain=numChain,
+                  supp=supp, numMine=numMine,
+                  alpha_1=alpha_1, alpha_2=alpha_2,
+                  beta_1=beta_1, beta_2=beta_2,
+                  alpha_l=alpha_l, beta_l=beta_l,
+                  bootstrap=T, reps=reps, seed=123)
+
+
+# Make bar plot --------------------------
+cooper_featureLabels <- cbind(names(cooper_df),
+                              c("Service Class", "Male", "High Ability"))
+cooper_bar <- plot_bar(df=cooper_df, Y=cooper_Y, fit=cooper_res,
+                       allFeatures=names(cooper_df), maxLen=3, featureLabels=cooper_featureLabels,
+                       and=" AND ", neg="NOT ", maxRules=10, minProp=0.05, simplify=T, heightBuffer=0)
+plot(cooper_bar)
+
+
+# Make chord diagram --------------------------
+# generate colors
+linkColors <- RColorBrewer::brewer.pal(12, "Set3")
+gridColors <- RColorBrewer::brewer.pal(6, "Greys")[3]
+# labels for feature groups
+cooper_featureGroups <- cbind(c("Class", "Ability", "Male"),  # features (w/o value) as they appear in df
+                              c("Service Class", "High Ability", "Male"))  # labels as you would like them to appear on graph
+plot_chord(fit=cooper_res, featureNames=names(cooper_df),
+           featureGroups=cooper_featureGroups,
+           linkColors=linkColors, gridColors=gridColors, textSize=2.5)
+
+
+# Make t-SNE plot --------------------------
+# generate colors
+caseColors <- c(RColorBrewer::brewer.pal(6, "Paired")[c(4,6)])
+boxColor <- prettyGraphs::add.alpha(brewer.pal(3, "Greys"), alpha=.7)[2]
+# rules to plot
+A <- list(c("Class_1", "Ability_1"), c("Class_1", "Male_1"))
+
+# run t-SNE
+set.seed(1) # t-SNE is a stochastic algorithm
+plot_tsne(df=cooper_df, Y=cooper_Y, A=A,
+          caseColors=caseColors, boxColor=boxColor,
+          bottom_buffer=3, legend_offset=c(-5,-3),  # may need to change these depending on the dimensions of your plot
+          jitter_amount=1, textSize=1.5)

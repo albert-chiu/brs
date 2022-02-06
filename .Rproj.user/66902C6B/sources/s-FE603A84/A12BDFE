@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1629933738078.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3084237678",
+    "id" : "A12BDFE",
+    "lastKnownWriteTime" : 1631655367,
+    "last_content_update" : 1631655367,
+    "path" : "~/Dropbox/QCAplus/package/BRS/R/helper_functions.R",
+    "project_path" : "R/helper_functions.R",
+    "properties" : {
+        "cursorPosition" : "24,26",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1614835687651.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1040812750",
+    "id" : "5D591F99",
+    "lastKnownWriteTime" : 1614843534,
+    "last_content_update" : 1614843534977,
+    "path" : "~/Dropbox/QCAplus/package/example.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "64,62",
+        "scrollLine" : "0",
+        "tempName" : "Untitled2"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
