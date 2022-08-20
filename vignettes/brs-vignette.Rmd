@@ -1,0 +1,43 @@
+---
+title: "brs-vignette"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{brs-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(brs)
+
+reticulate::conda_install(envname = "BRS_conda",
+  conda="auto",  # check default sequence of locations for conda
+  packages = c("numpy", "pandas", "scikit-learn", "scipy"),
+  python_version = "3.6.1")
+reticulate::use_condaenv("BRS_conda")  ## use this conda environment for BRS
+
+set.seed(123)
+data("lipset_df", "lipset_Y")
+out_lipset <- brs::BRS(df = lipset_df, Y = lipset_Y, 
+                       maxLen=maxLen, trainProp=trainProp,
+                       numIter=numIter, numChain=numChain,
+                       supp=supp, numMine=numMine,
+                       alpha_1=alpha_1, alpha_2=alpha_2,
+                       beta_1=beta_1, beta_2=beta_2,
+                       prior_type="poisson",
+                       alpha_l=NULL, beta_l=NULL,  # not used for the poisson version
+                       lambda=lambda, nu=nu,    # note: BRS_0.0.0.9006 uses nu to refer to eta from the paper
+                       bootstrap=T, reps=100L,
+                       print=F,
+                       seed=sample.int(1e5, size=1))
+
+brs::plot_bar
+```
+
