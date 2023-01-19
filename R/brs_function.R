@@ -39,7 +39,7 @@
 #' @return indices of bootstrap samples
 #' @return accuracy, true positive rate, and false positive rate on test data for each rule set
 #' @export
-BRS <- function(df, Y, maxLen, trainProp,
+BRS <- function(df, Y, maxLen, trainProp=1,
                 numIter=500L, numChain=2L, numMine=5000L, supp=5L,
                 alpha_1=50L, beta_1=1L, alpha_2=50L, beta_2=1L,
                 prior_type="beta",
@@ -59,8 +59,8 @@ BRS <- function(df, Y, maxLen, trainProp,
   }
 
   # load required Python code
-  reticulate::import_from_path("BOAmodel", path=system.file("python", package="BRS")) #delay=T?
-  reticulate::source_python(system.file("python", "bootstrap.py", package="BRS"))
+  reticulate::import_from_path("BOAmodel", path=system.file("python", package="brs")) #delay=T?
+  reticulate::source_python(system.file("python", "bootstrap.py", package="brs"))
 
   # run BRS
   results <- bootstrapBOA(supp, maxLen, numMine,
