@@ -23,21 +23,31 @@ knitr::opts_chunk$set(
  
 **R** source files can be found on [GitHub](https://github.com/albert-chiu/brs). **R** code used in this demonstration can also be downloaded from [GitHub](https://github.com/albert-chiu/brs/tree/main/vignettes).
 
+```{r, include=F}
+# for recompiling the vignette without errors (env already exists)
+#tryCatch( {reticulate::conda_remove(envname = "BRS_conda")}, 
+#          error=function(er){}, finally={})
+#do.call(file.remove, list(list.files("~/miniforge3/envs", full.names = T)))
+#do.call(unlink(x, recursive=T), function(x) list(list.files("~/miniforge3/envs", full.names = T)))
+#unlink("~/miniforge3/envs/BRS_conda", recursive = T)
+```
 
 ```{r setup, cache=T}
 # First create conda environment 
-# do this *before* loading the brs package. If you've already loaded brs, you 
-#     may need to restart R and rerun the code in the order shown below
+# do this *before* loading the brs package. If you've already loaded brs or 
+#   have been using reticulate, you may need to restart R and rerun your code
+#   in the order shown below
 # Note: this code is for computers with Apple silicon (M1, etc.)
 
 # install python and packages to environment
-#reticulate::conda_create(envname = "BRS_conda")
-reticulate::conda_install(envname = "BRS_conda3",
+#reticulate::conda_create(envname = "~/miniforge3/envs/BRS_conda")
+reticulate::conda_install(envname = "~/miniforge3/envs/BRS_conda",
   conda="~/miniforge3/condabin/conda",  # path to conda binary
   packages = c("numpy", "pandas", "scikit-learn", "scipy"))
-reticulate::use_condaenv(condaenv="BRS_conda3")  ## use this conda environment for BRS
+reticulate::use_condaenv(condaenv="~/miniforge3/envs/BRS_conda")  
 
-# load brs
+# install and load
+# # uncomment if you haven't already installed the package
 library(brs)
 ```
 
@@ -51,21 +61,47 @@ out_lipset <- brs::BRS(df = lipset_df, Y = lipset_Y, seed = 123,
                        maxLen=3L, bootstrap = T, reps=100L)
 ```
 
-```{r barplot}
-# barplot
+## Bar graph
+Before we create the bar graph, we need to create some objects to help the function label and simplify features. First, we need to create a dataframe with labels of your variables.
+
+```{r bar-labels}
 fdf <- cbind(colnames(lipset_df),
              c("Wealth (high)", "Wealth (med)", "Wealth (low)",
                "Urbanization (high)", "Urbanization (low)", 
                "Education (high)", "Education (low)", 
                "Industrialization (high)", "Industrialization (low)"))
-oppmat <- matrix(c(0,1), ncol=2)
-oppind <- list(unique(unlist(lapply(colnames(lipset_df), function(x) strsplit(x, "_")[[1]][[1]])))[2:4])
 
-lipset_bar <- brs::plot_bar(df = lipset_df, Y=lipset_Y, fit = out_lipset, featureLabels = fdf,
-              maxLen=3, minProp = .05, topRules=5, 
-                           simplify = T, oppmat=oppmat, oppind=oppind, and =" & ",
-                           plotBuffer = c(.25, 0, .4), boot_rep = 100L,
-                           titleSize=10, rule_text_size = 10, number_size = 10)
+# a low effort stopgap is to just use the variable names as the labels:
+# fdf <- cbind(colnames(lipset_df), colnames(lipset_df))
+```
+
+Next, optionally you can simplify features that are equivalent by defining equivalence classes. You can skip this set (and set the <tt>simplify</tt> argument of the <tt>plot_bar</tt> function to <tt>FALSE</t>>) if you find it to burdensome, but we recommend that you do this if you are at a more serious stage in the research process. 
+
+For example, if you have a binary variable $X$, you can change all rules with 'not $X$=0' to '$X$=1' and all rules with 'not $X=1$' to 'X=0.' To do this, you need two objects: a list of (vectors of) variable names <tt>oppind</tt> and a matrix of values <tt>oppmat</tt>. The $i$th index <tt>oppind</tt> corresponds to the $i$th row of <tt>oppmat</tt>. <tt>oppmat</tt> will have two columns, each containing one of the two possible values of the binary variables in the respective entry of <tt>oppind</tt>.
+
+For our democracy example, there are three binary variables (and no other variables) for which we would like to create equivalence classes:
+```{r bar-opp}
+# create 
+#oppind <- list(unique(unlist(lapply(colnames(lipset_df), 
+                #function(x) strsplit(x, "_")[[1]][[1]])))[2:4])
+oppind <- list(c("URBANIZA", "LITERACY", "INDLAB"))
+```
+Each of these variables can take on either the value 0 or 1. 
+```{r bar-oppmat}
+oppmat <- matrix(c(0,1), ncol=2)
+```
+We could have more possible duos of values, e.g., for a variable like <tt>GNPCAP</tt> with three possible values, 'low,' 'med,' and 'high,' if we create overlapping binary categories 'low,' 'medium or high,' and 'high' (which in this example we did not), another duo might be 'low' and 'medium or high.' This would require its own row of <tt>oppmat</tt> and entry in <tt>oppind</tt>. We show this in a more complicated example later on.
+
+Finally, we can make our barplot (see documentation for more thurough explanation of each argument, as well as their default values):
+```{r bar}
+lipset_bar <- brs::plot_bar(df = lipset_df, Y=lipset_Y, fit = out_lipset, 
+    featureLabels = fdf, maxLen=3, boot_rep = 100L,
+    minProp = .05,  # rules must appear in at least 5% of bootstraps
+    topRules=5,  # plot at most the top five rules of each length
+    simplify = T, oppmat=oppmat, oppind=oppind, 
+    and =" & ",  # how to display the 'and' operator
+    plotBuffer = c(.25, 0, .4),  # white spacing around plot
+    titleSize=10, rule_text_size = 10, number_size = 10)  # visual parameters
 ```
 
 ```{r print-barplot, fig.dim = c(7, 4)}
