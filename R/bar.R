@@ -296,13 +296,14 @@ plot_bar <- function(df, Y, fit, featureLabels, maxLen, topRules=10,
     heights <- unlist(lapply(freq, function(x) length(x)))
     for(len in maxLen:1){
 
-      if (darken_none == T) {
-        darken <- rep(FALSE, times=nrow(p_data_freq[[len]]))
-      } else {
-# to add code to automatically darken aggregated rules
-      }
-
       if ( !is.null(rules[[len]]) ){
+
+        if (darken_none == T) {
+          darken <- rep(FALSE, times=nrow(p_data_freq[[len]]))
+        } else {
+          # to add code to automatically darken aggregated rules
+        }
+
         p_freq <- ggplot2::ggplot(p_data_freq[[len]])+
           ggplot2::geom_bar(ggplot2::aes(x=reorder(rules, freq), y=freq), stat="identity", width=.7, alpha=ifelse(darken, yes=1, no=.5))+
           ggplot2::lims(y=c(maxFreq, 0))+

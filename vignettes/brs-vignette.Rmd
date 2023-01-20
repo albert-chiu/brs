@@ -25,27 +25,30 @@ knitr::opts_chunk$set(
 
 
 ```{r setup, cache=T}
-# create conda environment
-#reticulate::conda_create("BRS_conda2")  
+# First create conda environment 
+# do this *before* loading the brs package. If you've already loaded brs, you 
+#     may need to restart R and rerun the code in the order shown below
+# Note: this code is for computers with Apple silicon (M1, etc.)
 
 # install python and packages to environment
+#reticulate::conda_create(envname = "BRS_conda")
 reticulate::conda_install(envname = "BRS_conda3",
-  conda="~/miniforge3/condabin/conda",  # check default sequence of locations for conda
-  #channel = "conda-forge/osx-arm64",
+  conda="~/miniforge3/condabin/conda",  # path to conda binary
   packages = c("numpy", "pandas", "scikit-learn", "scipy"))
-  #python_version = "3.6")  # python version to use
-    # note: replication code for paper uses 3.6.1, 
-    # but version names have since been truncated
 reticulate::use_condaenv(condaenv="BRS_conda3")  ## use this conda environment for BRS
 
-#reticulate::conda_remove("BRS_conda")
-
-# brs
+# load brs
 library(brs)
+```
+
+```{r brs, cache=T}
 set.seed(123)
-data("lipset_df", "lipset_Y")
-out_lipset <- brs::BRS(df = lipset_df, Y = lipset_Y, 
-                       maxLen=3L, trainProp=.7, bootstrap = T, reps=10L)
+# load data for example
+data("lipset_df", "lipset_Y")  
+
+# run BRS with default parameters
+out_lipset <- brs::BRS(df = lipset_df, Y = lipset_Y, seed = 123, 
+                       maxLen=3L, bootstrap = T, reps=100L)
 ```
 
 ```{r barplot}
@@ -61,8 +64,8 @@ oppind <- list(unique(unlist(lapply(colnames(lipset_df), function(x) strsplit(x,
 lipset_bar <- brs::plot_bar(df = lipset_df, Y=lipset_Y, fit = out_lipset, featureLabels = fdf,
               maxLen=3, minProp = .05, topRules=5, 
                            simplify = T, oppmat=oppmat, oppind=oppind, and =" & ",
-                           plotBuffer = c(.25, 0, .4), boot_rep = 10L,
-                           titleSize=8, rule_text_size = 8, number_size = 8)
+                           plotBuffer = c(.25, 0, .4), boot_rep = 100L,
+                           titleSize=10, rule_text_size = 10, number_size = 10)
 ```
 
 ```{r print-barplot, fig.dim = c(7, 4)}

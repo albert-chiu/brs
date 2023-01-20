@@ -39,7 +39,7 @@
 #' @return indices of bootstrap samples
 #' @return accuracy, true positive rate, and false positive rate on test data for each rule set
 #' @export
-BRS <- function(df, Y, maxLen, trainProp=1,
+BRS <- function(df, Y, maxLen, trainProp=.7,
                 numIter=500L, numChain=2L, numMine=5000L, supp=5L,
                 alpha_1=50L, beta_1=1L, alpha_2=50L, beta_2=1L,
                 prior_type="beta",
