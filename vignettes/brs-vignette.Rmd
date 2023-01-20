@@ -60,9 +60,9 @@ oppind <- list(unique(unlist(lapply(colnames(lipset_df), function(x) strsplit(x,
 
 lipset_bar <- brs::plot_bar(df = lipset_df, Y=lipset_Y, fit = out_lipset, featureLabels = fdf,
               maxLen=3, minProp = .05, topRules=5, 
-                           simplify = T, oppmat=oppmat, oppind=oppind, and =" & ", textSize = 12,
-                           plotBuffer = c(.25, 0, .4), boot_rep = 10L)
-                           #titleSize=19, rule_text_size = 18, number_size = 18
+                           simplify = T, oppmat=oppmat, oppind=oppind, and =" & ",
+                           plotBuffer = c(.25, 0, .4), boot_rep = 10L,
+                           titleSize=8, rule_text_size = 8, number_size = 8)
 ```
 
 ```{r print-barplot, fig.dim = c(7, 4)}

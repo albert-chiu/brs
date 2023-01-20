@@ -18,7 +18,7 @@
 #' @param textSize \code{size} parameter passed to \code{ggplot2::element_text}
 #' @return bar plot with frequency and coverage of rules
 #' @export
-plot_bar <- function(df, Y, fit, featureLabels,
+.plot_bar <- function(df, Y, fit, featureLabels,
                      maxLen, topRules=10,
                      and=" AND ", neg="NOT ",
                      minProp=0, simplify=T, oppmat=NULL, oppind=NULL,
@@ -191,19 +191,20 @@ plot_bar <- function(df, Y, fit, featureLabels,
 #'                       name labels
 #' @param number_size a graphical parameter for text size of numbers
 #' @param boot_rep the number of bootstraps
+#' @param neg_color color for negative coverage
+#' @param darken which features to darken
 #' @return a bar plot of the most prevalent rules of each length, sorted by
 #'         prevalence, and their prevalence and (negative and positive)
 #'         Darkens the bars for the rules chosen by our aggregation
 #'         method for the democracy example.
 ### allows darkening; to be fixed ###
-.plot_bar <- function(df, Y, fit, featureLabels, maxLen, topRules=10,
+plot_bar <- function(df, Y, fit, featureLabels, maxLen, topRules=10,
                      and=" AND ", neg="NOT ", minProp=0, simplify=T,
                      oppmat=NULL, oppind=NULL, heightBuffer=1, plotBuffer=0,
                      titleSize=16, rule_text_size=16, number_size=16,
-                     boot_rep=100,
+                     boot_rep=100, neg_color = "red",
                      darken = NULL){
 
-  neg_color <- "grey" # red
     neg_alpha <- 1 # .5
 
     allRuleSets <- fit[["Rule Sets"]]
@@ -285,17 +286,20 @@ plot_bar <- function(df, Y, fit, featureLabels,
       }
     }
 
+    if (is.null(darken)) {
+      darken_none <- T
+    }
+
     # make plots
     p <- list()
     makeLabel <- TRUE # add X axis label to last plot only
     heights <- unlist(lapply(freq, function(x) length(x)))
     for(len in maxLen:1){
-      if (len == 1) {
-        darken <- c(T, F, F)
-      } else if (len == 2 ) {
-        darken <- c(F, T, F,F,F)
+
+      if (darken_none == T) {
+        darken <- rep(FALSE, times=nrow(p_data_freq[[len]]))
       } else {
-        darken <- c(F)
+# to add code to automatically darken aggregated rules
       }
 
       if ( !is.null(rules[[len]]) ){
