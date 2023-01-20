@@ -18,17 +18,15 @@ knitr::opts_chunk$set(
 
 **References**: 
  
- - Chiu, Albert and Yiqing Xu. "Bayesian Rule Set: A Quantitative Alternative to Qualitative Comparative Analysis." *The Journal of Politics*, forthcoming. 
- - Wang, Tong, Cynthia Rudin, Finale Doshi-Velez, Yimin Liu, Erica Klampfl, and Perry MacNeille. "A bayesian framework for learning rule sets for interpretable classification." *The Journal of Machine Learning Research** 18, no. 1 (2017): 2357-2393.
+ - Chiu, Albert and Yiqing Xu. "Bayesian Rule Set: A Quantitative Alternative to Qualitative Comparative Analysis." *The Journal of Politics* 85, no. 1 (2023):. 
+ - Wang, Tong, Cynthia Rudin, Finale Doshi-Velez, Yimin Liu, Erica Klampfl, and Perry MacNeille. "A bayesian framework for learning rule sets for interpretable classification." *The Journal of Machine Learning Research* 18, no. 1 (2017): 2357-2393.
  
 **R** source files can be found on [GitHub](https://github.com/albert-chiu/brs). **R** code used in this demonstration can also be downloaded from [GitHub](https://github.com/albert-chiu/brs/tree/main/vignettes).
 
 
-```{r setup}
-library(brs)
-
+```{r setup, cache=T}
 # create conda environment
-reticulate::conda_create("BRS_conda2")  
+#reticulate::conda_create("BRS_conda2")  
 
 # install python and packages to environment
 reticulate::conda_install(envname = "BRS_conda3",
@@ -42,10 +40,31 @@ reticulate::use_condaenv(condaenv="BRS_conda3")  ## use this conda environment f
 
 #reticulate::conda_remove("BRS_conda")
 
+# brs
+library(brs)
 set.seed(123)
 data("lipset_df", "lipset_Y")
 out_lipset <- brs::BRS(df = lipset_df, Y = lipset_Y, 
-                       maxLen=3L, trainProp=1)
-brs::plot_bar(df = lipset_df, fit = out_lipset, featureLabels = fdf, maxLen=3)
+                       maxLen=3L, trainProp=.7, bootstrap = T, reps=10L)
+```
 
+```{r barplot}
+# barplot
+fdf <- cbind(colnames(lipset_df),
+             c("Wealth (high)", "Wealth (med)", "Wealth (low)",
+               "Urbanization (high)", "Urbanization (low)", 
+               "Education (high)", "Education (low)", 
+               "Industrialization (high)", "Industrialization (low)"))
+oppmat <- matrix(c(0,1), ncol=2)
+oppind <- list(unique(unlist(lapply(colnames(lipset_df), function(x) strsplit(x, "_")[[1]][[1]])))[2:4])
+
+lipset_bar <- brs::plot_bar(df = lipset_df, Y=lipset_Y, fit = out_lipset, featureLabels = fdf,
+              maxLen=3, minProp = .05, topRules=5, 
+                           simplify = T, oppmat=oppmat, oppind=oppind, and =" & ", textSize = 12,
+                           plotBuffer = c(.25, 0, .4), boot_rep = 10L)
+                           #titleSize=19, rule_text_size = 18, number_size = 18
+```
+
+```{r print-barplot, fig.dim = c(7, 4)}
+print(lipset_bar)
 ```
