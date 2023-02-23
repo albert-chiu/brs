@@ -3,38 +3,44 @@
 
 #' Make a t-SNE plot
 #'
-#' Makes a t-SNE plot with color coding for classification correctness and shading for predicted outcome
-#' @param df dataframe of binary features
-#' @param Y vector of binary outcome
-#' @param A rule set to use for determining which variables will be used for training t-SNE (will use outcome plus all variables that appear in \code{A})
-#' @param caseColors vector colors to use for classification correctness. The first element is for correct, second is for incorrect
-#' @param boxColor color for shading
-#' @param pointSize \code{cex} paramater for \code{plot} for size of points
-#' @param textSize \code{cex} paramater for \code{legend} for size of text
-#' @param symb \code{pch} paramater for \code{plot} for symbol of points
-#' @param bottom_buffer amount by which to shift bottom of graph up for legend
-#' @param all_buffer buffer on all sides of plot
-#' @param legend_under_plot whether legend is under plot or inside the plot. Overrides \code{legend_coordinates}
-#' @param legend_bg_col background color of legend
-#' @param legend_offset distance to move legend (as a percentage). Negative values move legend to the left and down, positive values move legend to the right and up. If \code{legend_under_plot=F}, then this argument is analagous to the inset arguement for \code{\link[graphics]{plot}}
-#' @param legend_position either x,y coordinates or keyword for legend position. Only used if \code{legend_under_plot=F}. Passed to the \code{x,y} argument for \code{\link[graphics]{legend}}
-#' @param legend_position position of legend
-#' @param shade_name label in legend for shaded points
-#' @param jitter_factor factor by which to jitter points
-#' @param jitter_amount amount by which to jitter points
-#' @param max_iter maximum number of iterations to run t-SNE
-#' @return t-SNE plot
-#' @export
-plot_tsne <- function(df, Y, A, caseColors, boxColor, pointSize=1, textSize=1, symb=19,
+#' Makes a t-SNE plot of the data and using a rule set. Color codes based on
+#' actual outcome and symbol codes based on classification outcome
+#'
+#' @param X data, excluding outcome
+#' @param Y outcome
+#' @param ruleSet rule set for classification. Will only use variables that
+#'        appear in the rule set to train tsne model
+#' @param caseColors a vector of colors, the first for Y=1 the second  for Y=0
+#' @param symb a numeric vector to determine symbol type (pch for plot), the
+#'             first for Yhat=1 and the second for Yhat=0
+#' @param pointSize graphical parameter for size of points (cex for plot)
+#' @param textSize graphical parameter for size of text (cex for legend)
+#' @param bottom_buffer graphical parameter for adding white space to the
+#'                      bottom of the plot to make room for legend
+#' @param all_buffer graphical parameter for adding white space around plot
+#' @param legend_under_plot logical for whether the legend should be under the
+#'                          plot. If false, the legend will be inside the plot
+#' @param legend_bg_col the background color of the legend
+#' @param legend_offset a vector of how much to offset the legend along each
+#'                      axis
+#' @param jitter_factor the factor input for the jitter function
+#' @param jitter_amount the amount input for the jitter function
+#' @param max_iter the maximum iteration to run tsne for
+#' @param highlight the index (or indices) of the rule in ruleSet to be highlighted.
+#'                  The resulting graph will highlight ruleSet[highlight]
+#' @return a t-SNE plot
+plot_tsne <- function(X, Y, ruleSet, caseColors, symb=c(1, 4),
+                      pointSize=1, textSize=1,
                       bottom_buffer=1.25, all_buffer=1,
-                      legend_under_plot=T, legend_bg_col="transparent", legend_offset=c(0,0),
-                      legend_position="bottomright", shade_name="Positive classification",
+                      legend_under_plot=T, legend_bg_col="transparent",
+                      legend_offset=c(0,0), legend_position="bottomright",
                       jitter_factor=1, jitter_amount=NULL,
-                      max_iter=1000){
+                      max_iter=1000,
+                      highlight=NULL, box_color=NULL){
 
-  ## Train tsne using outcome and features in A
+  ## Include only outcome and features in ruleSet
   incl <- c() # variables to include
-  for (rule in A) {
+  for (rule in ruleSet) {
     for (cond in rule) {
       split <- strsplit(cond, "_")[[1]]
       is_neg <- as.numeric(split[length(split)]=="neg")
@@ -42,30 +48,12 @@ plot_tsne <- function(df, Y, A, caseColors, boxColor, pointSize=1, textSize=1, s
     }
   }
 
-  train <- cbind.data.frame(Y, df[, colnames(df)[which(colnames(df) %in% incl)]])
-
-
-  if(F){
-  for(i in 1:length(A)){
-    for(j in 1:length(A[[i]])){
-      incl <- c(strsplit(A[[i]][j], "_")[[1]][1], incl) # append new feature to beginning of list of features to be included
-      if(is.na(match(incl[1], incl[-1]))){ # Make sure feature isn't already included
-        for(k in 1:ncol(df)){
-          feat <- strsplit(names(df)[k], "_")[[1]][1]
-          if(feat==incl[1]){
-            train <- cbind(train, df[,k])
-          }
-        }
-        #train %>% dplyr::mutate(!!feat := df[[feat]])
-      }
-    }
-  }
-  names(train) <- 1:ncol(train) # done so that no two columns share a name
-  }
-
-
+  ## Run t-SNE
+  train <- cbind.data.frame(Y, X[, colnames(X)[which(colnames(X) %in% incl)]])
   tsne <- Rtsne::Rtsne(train, dims=2, perplexity=5, verbose=F, max_iter=max_iter, check_duplicates=F)#, partial_pca=T)
-  Yhat <- rep(0, length(Y)) # Classification based on A
+  coord_nojitter <- tsne$Y
+
+  Yhat <- .getYhat(X, ruleSet) # Classification based on ruleSet
 
   ## Jitter
   tsne$Y <- jitter(tsne$Y, factor=jitter_factor, amount=jitter_amount)
@@ -75,66 +63,48 @@ plot_tsne <- function(df, Y, A, caseColors, boxColor, pointSize=1, textSize=1, s
   tsne$Y[,1] <- tsne$Y[,1]/rangeX*100
   tsne$Y[,2] <- tsne$Y[,2]/rangeY*100
 
-  ## Dimensions for boxes for shading
+
+  ## Highlight; plot before points otherwise will cover them up
   boxWidth = (max(tsne$Y[,1]) - min(tsne$Y[,1]))/25
   boxHeight = (max(tsne$Y[,2]) - min(tsne$Y[,2]))/25
-
-  ## Make shading slightly transparent
-  #boxColor <- add.alpha(boxColor, alpha=.7)
-
-  ## Plot boxes
   par(mar=c(bottom_buffer,0,0,0)+all_buffer)
   plot(2*max(tsne$Y), xlim=c(min(tsne$Y[,1]), max(tsne$Y[,1])), ylim=c(min(tsne$Y[,2]), max(tsne$Y[,2])),
        xlab="", ylab="",
        xaxt='n', yaxt='n')
-  for(i in 1:length(A)){ # For each rule we want to plot
-    # One rule
-    if(length(A[[i]])==1){
+  for (a in ruleSet[highlight]) {  # For each rule we want to plot
+    if (length(rule)==1) {  # One condition
       # Features and values
-      split <- strsplit(A[[i]], "_")[[1]]
+      split <- strsplit(a, "_")[[1]]
       is_neg <- as.numeric(split[length(split)]=="neg")
       feature <- paste(split[1:(length(split)-is_neg)], collapse="_")
       value <- as.numeric(!is_neg)
 
-      if(F){
-      split_rule <- strsplit(A[[i]], "_")
-      feature <- paste(split_rule[[1]][1], split_rule[[1]][2], sep="_")
-      value <- as.numeric(length(split_rule[[1]])==2) # if length 2, then no _neg, so positive (1) value
-      }
+      tsne_pos <- tsne$Y[X[,feature]==value,]
+      Yhat[Yhat==0] <- as.numeric(X[,feature]==value)[Yhat==0] # If satisfies rule, then classified as positive (if doesn't, not recoded)
 
-      tsne_pos <- tsne$Y[df[,feature]==value,]
-      Yhat[Yhat==0] <- as.numeric(df[,feature]==value)[Yhat==0] # If satisfies rule, then classified as positive (if doesn't, not recoded)
-
-      # Multiple rules
-    } else {
-      split_rules <- strsplit(A[[i]], "_")
+    } else {  # multiple conditions
+      split_conds <- strsplit(a, "_")
       features <- c()
       values <- c()
-      for(j in 1:length(A[[i]])){
-        split <- split_rules[[j]]
+      for (j in 1:length(a) ) {
+        split <- split_conds[[j]]
         is_neg <- as.numeric(split[length(split)]=="neg")
         features[j] <- paste(split[1:(length(split)-is_neg)], collapse="_")
         values[j] <- as.numeric(!is_neg)
-
-        if(F) {
-        features[j] <- paste(split_rules[[j]][1], split_rules[[j]][2], sep="_")
-        values[j] <- as.numeric(length(split_rules[[j]])==2) # if length 2, then no _neg, so positive (1) value
-        }
       }
-
-      values_matrix <- matrix(rep(values, nrow(df)), ncol=length(values), byrow=T)
-      tsne_pos <- tsne$Y[ apply(df[,features]==values_matrix, 1, all), ] # tsne coordinates of cases that satisfy the rule
-      Yhat[Yhat==0] <- as.numeric(apply(df[,features]==values_matrix, 1, all))[Yhat==0]
+      values_matrix <- matrix(rep(values, nrow(X)), ncol=length(values), byrow=T)
+      tsne_pos <- tsne$Y[ apply(X[,features]==values_matrix, 1, all), ] # tsne coordinates of cases that satisfy the rule
+      Yhat[Yhat==0] <- as.numeric(apply(X[,features]==values_matrix, 1, all))[Yhat==0]
     }
-    if(!is.null(nrow(tsne_pos))){ # Check multiple rows
-      for(j in 1:nrow(tsne_pos)){ # For each case that satisfies the rule
+
+    if (!is.null(nrow(tsne_pos))) {  # Check multiple rows
+      for (j in 1:nrow(tsne_pos)) {  # For each case that satisfies the rule
         # Draw a box around it
         rect(xleft=tsne_pos[j,1]-boxWidth/2, xright=tsne_pos[j,1]+boxWidth/2,
              ybottom=tsne_pos[j,2]-boxHeight/2, tsne_pos[j,2]+boxHeight/2,
              border=NA,
              lwd=10,
-             col=boxColor)
-        #density=boxDensity, lwd=.5, angle=boxAngles[i])
+             col="grey")
       }
     } else { # Vector, only 1 "row"
       rect(xleft=tsne_pos[1]-boxWidth/2, xright=tsne_pos[1]+boxWidth/2,
@@ -147,8 +117,10 @@ plot_tsne <- function(df, Y, A, caseColors, boxColor, pointSize=1, textSize=1, s
 
   ## Plot points
   par(new=T, mar=c(bottom_buffer,0,0,0)+all_buffer)
-  plot(tsne$Y, col=ifelse(Y==Yhat, yes=caseColors[1], no=caseColors[2]), # Color coded for correct prediction
-       pch=symb,#pch=symbols2[Y+1], # Symbol coded for actual value
+  plot(tsne$Y,
+       col=ifelse(Y==1, yes=caseColors[1], no=caseColors[2]),  # color code by outcome
+       pch=ifelse(Y==Yhat, yes=symb[1], no=symb[2]),  # symbol code by correct classification
+       lwd=ifelse(Y==Yhat, yes=0, no=1),
        cex = pointSize,
        xlim=c(min(tsne$Y[,1]), max(tsne$Y[,1])), ylim=c(min(tsne$Y[,2]), max(tsne$Y[,2])),
        xaxt='n', yaxt='n', xlab="", ylab="")
@@ -156,14 +128,102 @@ plot_tsne <- function(df, Y, A, caseColors, boxColor, pointSize=1, textSize=1, s
   ## Legend
   if(legend_under_plot){
     legend(x=min(tsne$Y[,1])+legend_offset[1], y=min(tsne$Y[,2])-1+legend_offset[2], ncol=2,
-           legend=c(shade_name, NA, "Correct classification", "Classification error"),
-           bg=legend_bg_col, col=c(boxColor, NA, caseColors),
-           pch=c(15, NA, rep(symb, 2)), box.lty = 0, cex=textSize,
+           legend=c("True positive", "True negative", "False negative", "False positive"),
+           bg=legend_bg_col, col=c(caseColors, caseColors),
+           pch=c(symb[1], symb[1], symb[2], symb[2]), box.lty = 0, cex=textSize,
            xpd=T)
   } else { ## legend inside plot
     legend(legend_position, inset=legend_offset,
-           legend=c(shade_name, "Correct classification", "Classification error"),
+           legend=c(shade_name, "Y=1", "Y=0"),
            bg=legend_bg_col, col=c(boxColor, caseColors),
            pch=c(15, rep(symb, 2)), box.lty = 0, cex=textSize)
   }
+}
+
+
+#' Get predicted outcomes
+#'
+#' Get the outcomes that a rule set would predict, i.e. Y=1 iff x \in ruleSet
+#'
+#' @param data data frame out independent variables without outcome
+#' @param ruleSet rule set
+#' @return predicted outcomes for each observation
+.getYhat <- function(data, ruleSet){
+  # when p_pos=1 and p_neg=0, .getY returns yhat (.getY returns 1 iff x \in ruleSet)
+  return(.getY(data, ruleSet))
+}
+
+#' Generate outcome
+#'
+#' Generates outcomes based on a rule set and the probability that the outcome
+#' is positive conditional on whether an observation satisfies the rule set
+#'
+#' @param X data frame with binary data for independent variables
+#' @param ruleSet true rule set with which to generate data
+#' @param p_pos probability of yn=1 if xn satisfies rule (default 1),
+#'              OR vector of probabilities (p_pos[i] corresponds to ruleSet[i])
+#' @param p_neg probability of yn=1 if xn does NOT satisfy rule (default 0),
+#'              OR vector of probabilities (p_neg[i] corresponds to ruleSet[i])
+#' @return a vector of outcomes
+.getY <- function(X, ruleSet, p_pos=1, p_neg = 0){
+  nameSet <- list()
+  valueSet <- list()
+  n <- nrow(X)
+  for(i in 1:length(ruleSet)){
+    rule <- ruleSet[[i]]
+    nameSet[[i]] <- .getNames(rule)
+    valueSet[[i]] <- .getValues(rule)
+  }
+  # Outcome
+  Y <- rep(0, n)
+  rand <- runif(n)
+  pp <- p_pos
+  pn <- p_neg
+  for(i in 1:length(nameSet)){
+    Y_i <- apply(X[nameSet[[i]]], 1, function(x) all(x==valueSet[[i]])) # Cases that satisfy ith rule
+    if(length(p_pos) > 1){
+      pp <- p_pos[i]
+    }
+    if(length(p_neg) > 1){
+      pn <- p_neg[i]
+    }
+    Y <- as.numeric(Y == 1 | (Y_i == 1 & rand <= pp) )# 1 if satisfies ith or any previous rule
+    Y <- as.numeric(Y == 1 | (Y_i == 0 & rand <= pn) )# 1 if satisfies ith or any previous rule
+  }
+  return(Y)
+}
+
+#' Get variable names for a rule
+#'
+#' Get the names of variables as they appear in the data corresponding to the
+#' conditions in a rule
+#'
+#' @param rule a rule, formatted as a vector of conditions
+#' @return vector of names of variables correspoding to the conditions in rule
+.getNames <- function(rule){
+  split <- strsplit(rule, "_")
+  names <- c()
+  for(i in 1:length(split)){
+    names[i] <- paste(split[[i]][split[[i]] != "neg"], collapse="_")
+  }
+  return(names)
+}
+
+#' Get rule values
+#'
+#' Get the values of each condition in a rule
+#'
+#' @param rule a rule, formatted as a vector of conditions
+#' @return vector of values for each condition in rule
+.getValues <- function(rule){
+  split <- strsplit(rule, "_")
+  values <- c()
+  for(i in 1:length(split)){
+    if(length(split[[i]]) == 3){
+      values[i] <- 0
+    } else {
+      values[i] <- 1
+    }
+  }
+  return(values)
 }

@@ -107,3 +107,25 @@ lipset_bar <- brs::plot_bar(df = lipset_df, Y=lipset_Y, fit = out_lipset,
 ```{r print-barplot, fig.dim = c(7, 4)}
 print(lipset_bar)
 ```
+
+
+```{r chord}
+# Feature names (without values) as they appear in X and their corresponding labels
+# (see description of .get_df_chord in helper.R; fgs corresponds to the input featureGroups)
+fgs <- cbind(unique(unlist(lapply(colnames(lipset_df), function(x) strsplit(x, "_")[[1]][[1]]))),
+             c("Wealth", "Urbanization", "Education", "Industrialization"))
+
+# get aggregated rule set
+ruleset <- brs::agg_BRS(fit = out_lipset, X = lipset_df, Y=lipset_Y, maxLen=3)
+plot_chord(ruleSet=ruleset, featureGroups=fgs,
+           linkColors=RColorBrewer::brewer.pal(11, "RdGy")[c(8,10)], 
+           #linkColors=RColorBrewer::brewer.pal(9, "Set3")[c(6,5)], 
+           gridColors = "grey", 
+           textSize = 1, side_mar=0, top_mar=0)
+```
+```{r tsne}
+set.seed(123)
+plot_tsne(X = lipset_df, Y = lipset_Y, ruleSet=ruleset,
+          pointSize = 1.25, symb = c(20, 4),
+          caseColors=RColorBrewer::brewer.pal(11, "RdYlGn")[c(2,9)])
+```

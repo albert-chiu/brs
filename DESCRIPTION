@@ -1,7 +1,7 @@
 Package: brs
 Type: Package
 Title: Bayesian Rule Set
-Version: 0.0.0.9006
+Version: 0.0.0.9007
 Authors@R: c(
     person("Albert", "Chiu", email = "altchiu@stanford.edu", role = c("aut", "cre")),
     person("Yiqing", "Xu", email = "yiqingxu@stanford.edu", role = "aut"))

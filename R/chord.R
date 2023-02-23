@@ -1,93 +1,49 @@
 ## Functions for making chord diagrams
 
-#' Make Chord Diagram
+
+#' Make a chord diagram
 #'
-#' Makes a chord diagram representing the frequency of interactions between features
-#' @param fit output from function \code{BRS}
-#' @param featureNames names of features as they appeared in df
-#' @param featureGroups dataframe whose first column is the features (only the prefixes, not the values) in \code{featureNames} and whose second column is the corresponding labels to display
-#' @param linkColors vector of colors to use for chords
-#' @param gridColors vector of colors to use for arcs
-#' @param minProp minimum proportion of times a relationship must appear to be plotted
-#' @param textSize \code{cex} parameter to be passed to \code{par}
-#' @return chord diagram
-#' @export
-plot_chord <- function(fit, featureNames, featureGroups,
+#' Makes a chord diagram of a single rule set
+#'
+#' @param ruleSet the rule set to plot, formatted as a list of rules
+#' @param featureGroups the featureGroups input for .get_df_chord
+#' @param linkColors a vector of colors for the links
+#' @param gridColors the color of the arcs
+#' @param maxLen the maximum allowed length of a rule
+#' @param textSize a graphical parameter for the cex of the text
+#' @param side_mar a graphical parameter for adding white space to the sides of
+#'                 the plot
+#' @param top_mar a graphical parameter for adding white space to the top of
+#'                 the plot
+#' @return a chord diagram of the rule set
+plot_chord <- function(ruleSet, featureNames, featureGroups,
                        linkColors, gridColors, bgLinkColor="gray",
-                       maxLen, lengths=c(1:maxLen), dims=c(1, maxLen),
                        minProp=0, textSize=1, line_arg=1, side_mar=0, top_mar=0){
 
-  allRuleSets <- fit[["Rule Sets"]]
+  maxLen <- max(unlist(lapply(ruleSet, length)))  # maximum length of a rule
 
-  df <- .get_df_chord(allRuleSets, featureGroups, maxLen=maxLen, minProp=minProp)
+  df <- .get_df_chord(list(ruleSet), featureGroups, maxLen=maxLen, minProp=minProp)
 
-  print(df)
   # plot
   circlize::circos.clear()
-  par(mfrow=dims, mar = c(0, side_mar, top_mar, side_mar), cex=textSize)
-  for (len in lengths) {
-    colors <- rep(bgLinkColor, times=nrow(df))
+  circlize::circos.par(gap.after = 10)
+  par(mar = c(0, side_mar, top_mar, side_mar), cex=textSize)
+
+  colors <- rep(0, times=nrow(df))
+  for (len in 1:maxLen) {
     ind <- which(df[, "deg"]==len)
     if (length(ind) > 0) {
       colors[ind] <- linkColors[as.numeric(df[ind, "color_ind"])]
     }
-    circlize::chordDiagram(df[, 1:3],
-                           link.sort=T,
-                           grid.col = gridColors, col = colors,
-                           annotationTrack = c("name", "grid"),
-                           annotationTrackHeight = c(0.03, 0.05),
-                           self.link = 1)
-    title(paste0("Length ", len), line=line_arg)
   }
-  circlize::circos.clear()
 
-  # adjacency matrix -----------------
-  if(F){
-  amat <- .amat_old(allRuleSets, featureNames, featureGroups)
-  amat[amat<minProp*length(allRuleSets)] <- 0
-
-  circlize::circos.clear()
-  par(cex = textSize, mar = c(0, 0, 0, 0), mfrow=c(1,1))
-  circlize::chordDiagram(amat,
-                         grid.col = gridColors, row.col = linkColors,
+  circlize::chordDiagram(df[, 1:3],
+                         link.sort=T,
+                         grid.col = gridColors, col = colors,
                          annotationTrack = c("name", "grid"),
+                         annotationTrackHeight = c(0.03, 0.05),
                          self.link = 1)
   circlize::circos.clear()
-  }
-
-  if(F) {
-  # get adjacency matrices
-  mats <- .amat(allRuleSets, featureGroups, maxLen=maxLen, minProp=minProp)
-  amats <- mats[[1]]
-  ind_mats <- mats[[2]]
-
-  amat <- amats[[1]]
-  for (i in 2:maxLen) {
-    amat <- amat + amats[[i]]
-  }
-
-  # plot
-  #circlize::circos.par(gap.after = 1/rep(1,nrow(amat_group)))
-  par(cex = textSize, mar = c(0, 0, 0, 0), mfrow=dims)
-  for (i in 1:maxLen) {
-    colorMat <- matrix(bgLinkColor, nrow=nrow(amat), ncol=ncol(amat))
-    ind <- which(amats[[i]]!=0)
-    if (length(ind) > 0) {
-      colorMat[ind] <- linkColors[ind_mats[[i]][ind]]
-    }
-    circlize::chordDiagram(amat,
-                           grid.col = gridColors, col = colorMat,
-                           annotationTrack = c("name", "grid"),
-                           self.link = 1)
-  }
-  circlize::circos.clear()
-
-
-  circlize::chordDiagram(amat,
-                         grid.col = gridColors, row.col = linkColors,
-                         annotationTrack = c("name", "grid"),
-                         self.link = 1)
-  }
 }
 
 
