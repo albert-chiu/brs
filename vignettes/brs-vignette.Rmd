@@ -75,9 +75,9 @@ fdf <- cbind(colnames(lipset_df),
 # fdf <- cbind(colnames(lipset_df), colnames(lipset_df))
 ```
 
-Next, optionally you can simplify features that are equivalent by defining equivalence classes. You can skip this set (and set the <tt>simplify</tt> argument of the <tt>plot_bar</tt> function to <tt>FALSE</t>>) if you find it to burdensome, but we recommend that you do this if you are at a more serious stage in the research process. 
+Next, optionally you can simplify features that are equivalent by defining equivalence classes. You can skip this set (and set the <tt>simplify</tt> argument of the <tt>plot_bar</tt> function to <tt>FALSE</tt>) if you find it to burdensome, but we recommend that you do this if you are at a more serious stage in the research process. 
 
-For example, if you have a binary variable $X$, you can change all rules with 'not $X$=0' to '$X$=1' and all rules with 'not $X=1$' to 'X=0.' To do this, you need two objects: a list of (vectors of) variable names <tt>oppind</tt> and a matrix of values <tt>oppmat</tt>. The $i$th index <tt>oppind</tt> corresponds to the $i$th row of <tt>oppmat</tt>. <tt>oppmat</tt> will have two columns, each containing one of the two possible values of the binary variables in the respective entry of <tt>oppind</tt>.
+For example, if you have a binary variable $X$, you can change all rules with 'not $X$=0' to '$X$=1' and all rules with 'not $X=1$' to '$X=0$.' To do this, you need two objects: a list of (vectors of) variable names <tt>oppind</tt> and a matrix of values <tt>oppmat</tt>. The $i$th index <tt>oppind</tt> corresponds to the $i$th row of <tt>oppmat</tt>. <tt>oppmat</tt> will have two columns, each containing one of the two possible values of the binary variables in the respective entry of <tt>oppind</tt>.
 
 For our democracy example, there are three binary variables (and no other variables) for which we would like to create equivalence classes:
 ```{r bar-opp}
@@ -108,21 +108,25 @@ lipset_bar <- brs::plot_bar(df = lipset_df, Y=lipset_Y, fit = out_lipset,
 print(lipset_bar)
 ```
 
-
+To plot the chord diagram, we also need to create a dataframe that maps the variable names as they appear in our data (first column) to the variable names as we want them to appear in our graph (second column).
 ```{r chord}
 # Feature names (without values) as they appear in X and their corresponding labels
-# (see description of .get_df_chord in helper.R; fgs corresponds to the input featureGroups)
 fgs <- cbind(unique(unlist(lapply(colnames(lipset_df), function(x) strsplit(x, "_")[[1]][[1]]))),
              c("Wealth", "Urbanization", "Education", "Industrialization"))
+fgs
+```
 
+```{r plot-chord}
 # get aggregated rule set
 ruleset <- brs::agg_BRS(fit = out_lipset, X = lipset_df, Y=lipset_Y, maxLen=3)
 plot_chord(ruleSet=ruleset, featureGroups=fgs,
-           linkColors=RColorBrewer::brewer.pal(11, "RdGy")[c(8,10)], 
-           #linkColors=RColorBrewer::brewer.pal(9, "Set3")[c(6,5)], 
+           #linkColors=RColorBrewer::brewer.pal(11, "RdGy")[c(8,10)], 
+           linkColors=RColorBrewer::brewer.pal(9, "Set3")[c(6,5)], 
            gridColors = "grey", 
            textSize = 1, side_mar=0, top_mar=0)
 ```
+
+Finally, we make the _t_-SNE plot.
 ```{r tsne}
 set.seed(123)
 plot_tsne(X = lipset_df, Y = lipset_Y, ruleSet=ruleset,
