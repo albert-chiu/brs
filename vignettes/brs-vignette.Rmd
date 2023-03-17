@@ -23,46 +23,68 @@ knitr::opts_chunk$set(
  
 **R** source files can be found on [GitHub](https://github.com/albert-chiu/brs). **R** code used in this demonstration can also be downloaded from [GitHub](https://github.com/albert-chiu/brs/tree/main/vignettes).
 
-```{r, include=F}
-# for recompiling the vignette without errors (env already exists)
-#tryCatch( {reticulate::conda_remove(envname = "BRS_conda")}, 
-#          error=function(er){}, finally={})
-#do.call(file.remove, list(list.files("~/miniforge3/envs", full.names = T)))
-#do.call(unlink(x, recursive=T), function(x) list(list.files("~/miniforge3/envs", full.names = T)))
-#unlink("~/miniforge3/envs/BRS_conda", recursive = T)
+## Installing <tt>{brs}</tt> and Python
+<tt>{brs}</tt> is not currently on CRAN and thus must be installed from GitHub. This can be done using the following code: 
+
+```{r install-brs}
+#devtools::install_github("albert-chiu/brs")
 ```
+
+<tt>{brs}</tt> uses source code written in Python and requires, in addition to the package itself, an installation of Python. We recommend [miniforge](https://github.com/conda-forge/miniforge) due to the variety of CPU architectures they support, which will hopefully preempt some incompatibility errors that would otherwise arise, although any installation that works will do.
+
+## Preliminaries
+<tt>{brs}</tt> uses the [<tt>reticulate</tt>](https://rstudio.github.io/reticulate/) package to run source code written in Python and requires a bit of setup. In our experience, we find that this process can vary depending on your hardware and software and may require some trouble-shooting. 
 
 ```{r setup, cache=T}
 # First create conda environment 
 # do this *before* loading the brs package. If you've already loaded brs or 
 #   have been using reticulate, you may need to restart R and rerun your code
 #   in the order shown below
-# Note: this code is for computers with Apple silicon (M1, etc.)
+# Note: this code is for computers with Apple silicon (M1, etc.) and the 
+#   corresponding miniforge installation 
 
 # install python and packages to environment
-#reticulate::conda_create(envname = "~/miniforge3/envs/BRS_conda")
+# note: this requires an Internet connection
 reticulate::conda_install(envname = "~/miniforge3/envs/BRS_conda",
   conda="~/miniforge3/condabin/conda",  # path to conda binary
   packages = c("numpy", "pandas", "scikit-learn", "scipy"))
 reticulate::use_condaenv(condaenv="~/miniforge3/envs/BRS_conda")  
 
-# install and load
-# # uncomment if you haven't already installed the package
+# load brs package
 library(brs)
 ```
 
+## Running the BRS algorithm
+The BRS algorithm requires a number of hyperparameters (see the above references). Our function has default values for all but maximum length of the rule. Other than that, you must supply the <tt>BRS</tt> function with a dataframe containing all explanatory variables and a separate outcome vector.
 ```{r brs, cache=T}
 set.seed(123)
 # load data for example
 data("lipset_df", "lipset_Y")  
 
+# BRS without bootstrapping on entire sample
+print(brs::BRS(df = lipset_df, Y = lipset_Y, seed = 123, maxLen=3L, 
+               trainProp = 1, bootstrap = F))
+```
+The function will output a list with three entries. The first will be the rule sets themselves. If you do not bootstrap, then there will only be one rule set, which itself will be formatted as a list of vectors, where each vector corresponds to a rule. If you do bootstrap, the first return entry will be a list of lists. The second entry will be a list of indices of the observations used for each bootstrapped sample. Some other functions in our package will access these indices, but they will likely not be of much interest independent of this. If you do not bootstrap, the second entry will be empty. The third entry will be a dataframe of out-of-sample performance statistics. If you choose to use a train/test split (which is the default), the function will fit a rule set on the training set and then evaluate its accuracy, true positive rate (tpr), and false positive rate (fpr) on the test set. Otherwise, this will come back populated with NaNs. 
+
+```{r brs-tt}
+# BRS without bootstrapping, with train/test split
+print(brs::BRS(df = lipset_df, Y = lipset_Y, seed = 123, maxLen=3L, 
+               bootstrap = F))  # default split is .7 training/.3 test
+```
+
+We can also bootstrap to obtain many rule sets. We will be using this for the remainder of this vignette.
+```{r brs-boot, cache=T}
 # run BRS with default parameters
 out_lipset <- brs::BRS(df = lipset_df, Y = lipset_Y, seed = 123, 
                        maxLen=3L, bootstrap = T, reps=100L)
+out_lipset[["Rule Sets"]][1:5 ]
+out_lipset[["Indices"]][1:5 ]
+out_lipset[["Stats"]][1:5, ]
 ```
 
-## Bar graph
-Before we create the bar graph, we need to create some objects to help the function label and simplify features. First, we need to create a dataframe with labels of your variables.
+## Creating a bar graph
+To visualize the bootstrapped rule sets, we recommend first making a bar graph. Before we create the graph, we need to create some objects to help our function label and simplify features. First, we need to create a dataframe with labels of your variables.
 
 ```{r bar-labels}
 fdf <- cbind(colnames(lipset_df),
@@ -71,7 +93,7 @@ fdf <- cbind(colnames(lipset_df),
                "Education (high)", "Education (low)", 
                "Industrialization (high)", "Industrialization (low)"))
 
-# a low effort stopgap is to just use the variable names as the labels:
+# a low effort stopgap is to use the variable names as they appear in your data:
 # fdf <- cbind(colnames(lipset_df), colnames(lipset_df))
 ```
 
@@ -88,9 +110,19 @@ oppind <- list(c("URBANIZA", "LITERACY", "INDLAB"))
 ```
 Each of these variables can take on either the value 0 or 1. 
 ```{r bar-oppmat}
-oppmat <- matrix(c(0,1), ncol=2)
+oppmat <- matrix(c(0,1), nrow=1)
 ```
-We could have more possible duos of values, e.g., for a variable like <tt>GNPCAP</tt> with three possible values, 'low,' 'med,' and 'high,' if we create overlapping binary categories 'low,' 'medium or high,' and 'high' (which in this example we did not), another duo might be 'low' and 'medium or high.' This would require its own row of <tt>oppmat</tt> and entry in <tt>oppind</tt>. We show this in a more complicated example later on.
+We could have more possible duos of values, e.g., for a variable like <tt>GNPCAP</tt> with three possible values, 'low,' 'med,' and 'high,' if we create overlapping binary categories 'low,' 'medium or high,' and 'high' (which in this example we did not), another duo might be 'low' and 'medium or high.' This would require its own row of <tt>oppmat</tt> and entry in <tt>oppind</tt>. If we also have a 'low or medium' category, this would require a separate entry. For example:
+
+```{r oppmat-eg}
+oppind_lmh <- list(c("GNPCAP"),
+                  c("GNPCAP"))
+oppmat_lmh <- rbind(c("low", "med_or_high"), 
+                    c("low_or_med", "high"))
+
+print(oppind_lmh)
+print(oppmat_lmh)
+```
 
 Finally, we can make our barplot (see documentation for more thurough explanation of each argument, as well as their default values):
 ```{r bar}
@@ -108,6 +140,10 @@ lipset_bar <- brs::plot_bar(df = lipset_df, Y=lipset_Y, fit = out_lipset,
 print(lipset_bar)
 ```
 
+
+## Making a chord diagram
+To visualize the interactions present in a single rule set, we recommend using a chord diagram. This could either be the rule set you found without bootstrapping, or the aggregated rule set with bootstrapping. We plot the latter (though in this example they are the same). Note that this graph is agnostic to how you obtain the rule set, meaning it can also be used with QCA or any other method.
+
 To plot the chord diagram, we also need to create a dataframe that maps the variable names as they appear in our data (first column) to the variable names as we want them to appear in our graph (second column).
 ```{r chord}
 # Feature names (without values) as they appear in X and their corresponding labels
@@ -116,6 +152,7 @@ fgs <- cbind(unique(unlist(lapply(colnames(lipset_df), function(x) strsplit(x, "
 fgs
 ```
 
+We then obtain and plot the aggregated rule set.
 ```{r plot-chord}
 # get aggregated rule set
 ruleset <- brs::agg_BRS(fit = out_lipset, X = lipset_df, Y=lipset_Y, maxLen=3)
@@ -126,7 +163,9 @@ plot_chord(ruleSet=ruleset, featureGroups=fgs,
            textSize = 1, side_mar=0, top_mar=0)
 ```
 
-Finally, we make the _t_-SNE plot.
+
+## Making a _t_-SNE plot
+Finally, we make the _t_-SNE plot to help visualize the raw data itself in a low dimensional way. As we recomend in the accompanying reference paper to this package, we only use the variables that are included in the final (aggregated) rule set.
 ```{r tsne}
 set.seed(123)
 plot_tsne(X = lipset_df, Y = lipset_Y, ruleSet=ruleset,
