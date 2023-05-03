@@ -15,6 +15,6 @@ Repo: [GitHub](https://github.com/albert-chiu/brs)
 
 ## Installation
 _brs_ is currently only available from GitHub. You can install it using the code below: 
-```{r install}
+```{r install, message=F}
 devtools::install_github('albert-chiu/brs')
 ```
