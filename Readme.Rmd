@@ -2,7 +2,7 @@
 title: "brs"
 author: "Albert Chiu, Yiqing Xu, and Tong Wang"
 date: "2023-05-03"
-output: html_document
+output: md_document
 ---
 
 ```{r setup, include=FALSE}
