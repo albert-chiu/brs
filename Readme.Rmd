@@ -1,0 +1,14 @@
+---
+title: "brs"
+author: "Albert Chiu, Yiqing Xu, and Tong Wang"
+date: "2023-05-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+_R_ package for implementing Bayesian Rule Sets (BRS).
+
+Repo: [GitHub](https://github.com/albert-chiu/brs)

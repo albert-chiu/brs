@@ -4,10 +4,9 @@ Title: Bayesian Rule Set
 Version: 0.0.0.9007
 Authors@R: c(
     person("Albert", "Chiu", email = "altchiu@stanford.edu", role = c("aut", "cre")),
-    person("Yiqing", "Xu", email = "yiqingxu@stanford.edu", role = "aut"))
-Description: Package for implementing Bayesian Rule Set (BRS) in R,
-    as well as graphical tools introduced in Chiu and Xu (working 
-    paper). BRS is an interpretable machine learning algorithm that
+    person("Yiqing", "Xu", email = "yiqingxu@stanford.edu", role = "aut")),
+    person("Tong", "Wang", email = "tong-wang@uiowa.edu", role = "aut")),
+Description: R package for implementing Bayesian Rule Set (BRS), a method introduced by Wang et al. (2017), as well as graphical tools introduced in Chiu and Xu (2023). BRS is an interpretable machine learning algorithm that
     uses rule sets to classify data. This package also allows users
     to create bar plots, t-SNE plots, and chord diagrams to help
     visualize the results of BRS.

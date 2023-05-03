@@ -2,7 +2,7 @@
 title: "brs: Bayesian Rule Set"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{brs-vignette}
+  %\VignetteIndexEntry{brs: Bayesian Rule Set}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -23,17 +23,17 @@ knitr::opts_chunk$set(
  
 **R** source files can be found on [GitHub](https://github.com/albert-chiu/brs). **R** code used in this demonstration can also be downloaded from [GitHub](https://github.com/albert-chiu/brs/tree/main/vignettes).
 
-## Installing <tt>{brs}</tt> and Python
-<tt>{brs}</tt> is not currently on CRAN and thus must be installed from GitHub. This can be done using the following code: 
+## Installing <tt>brs</tt> and Python
+<tt>brs</tt> is not currently on CRAN and thus must be installed from GitHub. This can be done using the following code: 
 
 ```{r install-brs}
 #devtools::install_github("albert-chiu/brs")
 ```
 
-<tt>{brs}</tt> uses source code written in Python and requires, in addition to the package itself, an installation of Python. We recommend [miniforge](https://github.com/conda-forge/miniforge) due to the variety of CPU architectures they support, which will hopefully preempt some incompatibility errors that would otherwise arise, although any installation that works will do.
+<tt>brs</tt> uses source code written in Python and requires, in addition to the package itself, an installation of Python. We recommend [miniforge](https://github.com/conda-forge/miniforge) due to the variety of CPU architectures they support, which will hopefully preempt some incompatibility errors that would otherwise arise, although any installation that works will do.
 
 ## Preliminaries
-<tt>{brs}</tt> uses the [<tt>reticulate</tt>](https://rstudio.github.io/reticulate/) package to run source code written in Python and requires a bit of setup. In our experience, we find that this process can vary depending on your hardware and software and may require some trouble-shooting. 
+<tt>brs</tt> uses the [<tt>reticulate</tt>](https://rstudio.github.io/reticulate/) package to run source code written in Python and requires a bit of setup. In our experience, we find that this process can vary depending on your hardware and software and may require some trouble-shooting. 
 
 ```{r setup, cache=T}
 # First create conda environment 
