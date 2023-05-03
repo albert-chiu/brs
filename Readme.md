@@ -1,3 +1,13 @@
 *R* package for implementing Bayesian Rule Sets (BRS).
 
 Repo: [GitHub](https://github.com/albert-chiu/brs)
+
+## Installation
+
+*brs* is currently only available from GitHub. You can install it using
+the code below:
+
+    devtools::install_github('albert-chiu/brs')
+
+    ## Skipping install of 'brs' from a github remote, the SHA1 (1d1836bc) has not changed since last install.
+    ##   Use `force = TRUE` to force installation
