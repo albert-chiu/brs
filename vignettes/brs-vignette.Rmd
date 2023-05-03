@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 **References**: 
  
- - Chiu, Albert and Yiqing Xu. "Bayesian Rule Set: A Quantitative Alternative to Qualitative Comparative Analysis." *The Journal of Politics* 85, no. 1 (2023):. 
+ - Chiu, Albert and Yiqing Xu. "Bayesian Rule Set: A Quantitative Alternative to Qualitative Comparative Analysis." *The Journal of Politics* 85, no. 1 (2023):280-295. 
  - Wang, Tong, Cynthia Rudin, Finale Doshi-Velez, Yimin Liu, Erica Klampfl, and Perry MacNeille. "A bayesian framework for learning rule sets for interpretable classification." *The Journal of Machine Learning Research* 18, no. 1 (2017): 2357-2393.
  
 **R** source files can be found on [GitHub](https://github.com/albert-chiu/brs). **R** code used in this demonstration can also be downloaded from [GitHub](https://github.com/albert-chiu/brs/tree/main/vignettes).

@@ -17,7 +17,7 @@ Examples: [Vignette](https://albertchiu.com/brs/docs/articles/brs-vignette)
 
 References: 
 
- - Chiu, Albert and Yiqing Xu. "Bayesian Rule Set: A Quantitative Alternative to Qualitative Comparative Analysis." *The Journal of Politics* 85, no. 1 (2023):. 
+ - Chiu, Albert and Yiqing Xu. "Bayesian Rule Set: A Quantitative Alternative to Qualitative Comparative Analysis." *The Journal of Politics* 85, no. 1 (2023):280-295. 
  - Wang, Tong, Cynthia Rudin, Finale Doshi-Velez, Yimin Liu, Erica Klampfl, and Perry MacNeille. "A bayesian framework for learning rule sets for interpretable classification." *The Journal of Machine Learning Research* 18, no. 1 (2017): 2357-2393.
 
 ## Installation
